@@ -1,13 +1,14 @@
 <?php
 
+namespace RenokiCo\PhpK8s\Test;
 
 use RenokiCo\PhpK8s\Exceptions\KubernetesAPIException;
 use RenokiCo\PhpK8s\K8s;
-use RenokiCo\PhpK8s\Kinds\K8sReplicaSet;
 use RenokiCo\PhpK8s\Kinds\K8sPod;
+use RenokiCo\PhpK8s\Kinds\K8sReplicaSet;
 use RenokiCo\PhpK8s\ResourcesList;
 
-class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
+class ReplicaSetTest extends TestCase
 {
     public function test_replica_set_build()
     {
@@ -90,7 +91,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
 
         $pod = $this->cluster->pod()
             ->setName('mysql')
-            ->setLabels(['tier' => 'backend', 'replicaSet-name' => 'mysql'])
+            ->setLabels(['tier' => 'backend', 'replicaset-name' => 'mysql'])
             ->setAnnotations(['mysql/annotation' => 'yes'])
             ->setContainers([$mysql]);
 
@@ -98,9 +99,8 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
             ->setName('mysql')
             ->setLabels(['tier' => 'backend'])
             ->setAnnotations(['mysql/annotation' => 'yes'])
-            ->setSelectors(['matchLabels' => ['tier' => 'backend']])
+            ->setSelectors(['matchLabels' => ['replicaset-name' => 'mysql']])
             ->setReplicas(1)
-            ->setUpdateStrategy('RollingUpdate')
             ->setMinReadySeconds(0)
             ->setTemplate($pod);
 
@@ -132,7 +132,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
         K8sReplicaSet::selectPods(function ($dep) {
             $this->assertInstanceOf(K8sReplicaSet::class, $dep);
 
-            return ['tier' => 'backend'];
+            return ['replicaset-name' => 'mysql'];
         });
 
         $pods = $dep->getPods();
@@ -200,7 +200,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
         $cpuMetric = K8s::metric()->cpu()->averageUtilization(70);
 
         $hpa = $this->cluster->horizontalPodAutoscaler()
-            ->setName('deploy-mysql')
+            ->setName('rs-mysql')
             ->setResource($dep)
             ->addMetrics([$cpuMetric])
             ->setMetrics([$cpuMetric])
@@ -241,7 +241,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
     public function runDeletionTests()
     {
         $dep = $this->cluster->getReplicaSetByName('mysql');
-        $hpa = $this->cluster->getHorizontalPodAutoscalerByName('deploy-mysql');
+        $hpa = $this->cluster->getHorizontalPodAutoscalerByName('rs-mysql');
 
         $this->assertTrue($dep->delete());
         $this->assertTrue($hpa->delete());
@@ -264,7 +264,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
         $this->expectException(KubernetesAPIException::class);
 
         $this->cluster->getReplicaSetByName('mysql');
-        $this->cluster->getHorizontalPodAutoscalerByName('deploy-mysql');
+        $this->cluster->getHorizontalPodAutoscalerByName('rs-mysql');
     }
 
     public function runWatchAllTests()
