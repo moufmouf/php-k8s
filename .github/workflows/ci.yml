@@ -50,7 +50,7 @@ jobs:
     name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} - K8s v${{ matrix.kubernetes }} --${{ matrix.prefer }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -59,7 +59,7 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, yaml
           coverage: pcov
 
-      - uses: actions/cache@v3.0.5
+      - uses: actions/cache@v4
         name: Cache dependencies
         with:
           path: ~/.composer/cache/files
@@ -77,6 +77,10 @@ jobs:
           kubectl proxy --port=8080 --reject-paths="^/non-existent-path" &
 
       - name: Install dependencies
+        # Older Laravel versions have published security advisories: Composer refuses to install them unless blocking
+        # is turned off, and the package still tests against them.
+        env:
+          COMPOSER_NO_BLOCKING: "1"
         run: |
           composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
           composer update --${{ matrix.prefer }} --prefer-dist --no-interaction
@@ -97,6 +101,6 @@ jobs:
         run: |
           vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
 
-      - uses: codecov/codecov-action@v3.1.0
+      - uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: false
