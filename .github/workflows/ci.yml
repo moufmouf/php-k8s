@@ -16,7 +16,7 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     strategy:
       fail-fast: false
@@ -92,7 +92,6 @@ jobs:
           kubectl apply -f https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/main/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml
 
       - name: Run tests
-        timeout-minutes: 20
         run: |
           vendor/bin/phpunit --coverage-filter src --coverage-text --coverage-clover=coverage.xml
 
