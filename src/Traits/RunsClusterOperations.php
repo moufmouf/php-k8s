@@ -274,9 +274,13 @@ trait RunsClusterOperations
         $this->setAttribute('preconditions', [
             'resourceVersion' => $this->getResourceVersion(),
             'uid' => $this->getResourceUid(),
+        ]);
+
+        // These are DeleteOptions fields, not preconditions: the API only honours them as query parameters here.
+        $query += array_filter([
             'propagationPolicy' => $propagationPolicy,
             'gracePeriodSeconds' => $gracePeriod,
-        ]);
+        ], fn ($value) => $value !== null);
 
         $this->refresh();
 

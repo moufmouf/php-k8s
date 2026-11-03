@@ -15,7 +15,7 @@ class PodTest extends TestCase
     {
         $mysql = K8s::container()
             ->setName('mysql')
-            ->setImage('public.ecr.aws/docker/library/mysql', '5.7')
+            ->setImage('public.ecr.aws/docker/library/mysql', '8.0')
             ->setPorts([
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ])
@@ -65,7 +65,7 @@ class PodTest extends TestCase
     {
         $mysql = K8s::container()
             ->setName('mysql')
-            ->setImage('public.ecr.aws/docker/library/mysql', '5.7')
+            ->setImage('public.ecr.aws/docker/library/mysql', '8.0')
             ->setPorts([
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ])
@@ -139,7 +139,7 @@ class PodTest extends TestCase
     {
         $mysql = K8s::container()
             ->setName('mysql-attach')
-            ->setImage('public.ecr.aws/docker/library/mysql', '5.7')
+            ->setImage('public.ecr.aws/docker/library/mysql', '8.0')
             ->setPorts([
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ])
@@ -170,7 +170,7 @@ class PodTest extends TestCase
     {
         $mysql = K8s::container()
             ->setName('mysql')
-            ->setImage('public.ecr.aws/docker/library/mysql', '5.7')
+            ->setImage('public.ecr.aws/docker/library/mysql', '8.0')
             ->setPorts([
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ])
@@ -214,7 +214,7 @@ class PodTest extends TestCase
         $pod->refresh();
 
         $this->assertStringEndsWith('busybox:latest', $pod->getInitContainer('busybox')->getImage());
-        $this->assertStringEndsWith('mysql:5.7', $pod->getContainer('mysql')->getImage());
+        $this->assertStringEndsWith('mysql:8.0', $pod->getContainer('mysql')->getImage());
 
         $this->assertTrue($pod->containersAreReady());
         $this->assertTrue($pod->initContainersAreReady());

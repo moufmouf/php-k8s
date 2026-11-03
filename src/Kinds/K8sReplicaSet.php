@@ -23,7 +23,7 @@ class K8sReplicaSet extends K8sResource implements
     Watchable
 {
     use CanScale;
-    //use HasMinimumSurge;
+    use HasMinimumSurge;
     use HasPods;
     use HasReplicas;
     use HasSelector;
@@ -61,13 +61,13 @@ class K8sReplicaSet extends K8sResource implements
      */
     public function getPods(array $query = ['pretty' => 1])
     {
-        // FIXME: this worls only for matchLabels and not for matchExpression
+        // ponytail: only matchLabels is supported, not matchExpressions
         $labelSelector = urldecode(http_build_query(
-            $this->getSelectors()["matchLabels"] ?? []
+            $this->getSelectors()['matchLabels'] ?? []
         ));
 
         return $this->cluster->pod()->setNamespace($this->getNamespace())->all(
-            ['labelSelector' =>  $labelSelector] + $query
+            ['labelSelector' => $labelSelector] + $query
         );
     }
 

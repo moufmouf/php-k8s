@@ -16,14 +16,14 @@ jobs:
 
     runs-on: ubuntu-latest
 
-    timeout-minutes: 15
+    timeout-minutes: 25
 
     strategy:
       fail-fast: false
       matrix:
-        php: ['8.1', '8.2']
+        php: ['8.2', '8.3', '8.4']
         kubernetes: ['1.24.12', '1.25.8', '1.26.3']
-        laravel: ['9.*', '10.*', '11.*']
+        laravel: ['9.*', '10.*', '11.*', '12.*', '13.*']
         prefer: [prefer-lowest, prefer-stable]
         include:
           - laravel: "9.*"
@@ -32,14 +32,19 @@ jobs:
             testbench: "8.*"
           - laravel: "11.*"
             testbench: "9.*"
+          - laravel: "12.*"
+            testbench: "10.*"
+          - laravel: "13.*"
+            testbench: "11.*"
         exclude:
-          - laravel: "11.*"
-            php: "8.1"
+          - laravel: "13.*"
+            php: "8.2"
+            
 
     name: PHP ${{ matrix.php }} - Laravel ${{ matrix.laravel }} - K8s v${{ matrix.kubernetes }} --${{ matrix.prefer }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -48,7 +53,7 @@ jobs:
           extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, soap, intl, gd, exif, iconv, yaml
           coverage: pcov
 
-      - uses: actions/cache@v3.0.5
+      - uses: actions/cache@v4
         name: Cache dependencies
         with:
           path: ~/.composer/cache/files
@@ -59,6 +64,9 @@ jobs:
         with:
           minikube-version: 1.29.0
           container-runtime: containerd
+          # The default (2 CPUs, ~3.9GB) gets the mysql test pods OOM-killed, which takes the API server down with them.
+          cpus: max
+          memory: 10g
           kubernetes-version: v${{ matrix.kubernetes }}
 
       - name: Run Kubernetes Proxy
@@ -66,6 +74,10 @@ jobs:
           kubectl proxy --port=8080 --reject-paths="^/non-existent-path" &
 
       - name: Install dependencies
+        # Older Laravel versions have published security advisories: Composer refuses to install them unless blocking
+        # is turned off, and the package still tests against them.
+        env:
+          COMPOSER_NO_BLOCKING: "1"
         run: |
           composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
           composer update --${{ matrix.prefer }} --prefer-dist --no-interaction
@@ -83,9 +95,18 @@ jobs:
           kubectl apply -f https://raw.githubusercontent.com/bitnami-labs/sealed-secrets/main/helm/sealed-secrets/crds/bitnami.com_sealedsecrets.yaml
 
       - name: Run tests
+        # Shorter than the job timeout, so a hung test still leaves time for the cluster dump below.
+        timeout-minutes: 20
         run: |
-          vendor/bin/phpunit --coverage-text --coverage-clover=coverage.xml
+          vendor/bin/phpunit --coverage-filter src --coverage-text --coverage-clover=coverage.xml
 
-      - uses: codecov/codecov-action@v3.1.0
+      - name: Dump cluster state
+        if: failure()
+        run: |
+          kubectl get pods,jobs,cronjobs -A -o wide
+          kubectl get events -A --sort-by=.lastTimestamp | tail -60
+          kubectl describe pods -n default | tail -150
+
+      - uses: codecov/codecov-action@v5
         with:
           fail_ci_if_error: false

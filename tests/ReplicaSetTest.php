@@ -1,19 +1,20 @@
 <?php
 
+namespace RenokiCo\PhpK8s\Test;
 
 use RenokiCo\PhpK8s\Exceptions\KubernetesAPIException;
 use RenokiCo\PhpK8s\K8s;
-use RenokiCo\PhpK8s\Kinds\K8sReplicaSet;
 use RenokiCo\PhpK8s\Kinds\K8sPod;
+use RenokiCo\PhpK8s\Kinds\K8sReplicaSet;
 use RenokiCo\PhpK8s\ResourcesList;
 
-class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
+class ReplicaSetTest extends TestCase
 {
     public function test_replica_set_build()
     {
         $mysql = K8s::container()
             ->setName('mysql')
-            ->setImage('public.ecr.aws/docker/library/mysql', '5.7')
+            ->setImage('public.ecr.aws/docker/library/mysql', '8.0')
             ->setPorts([
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ]);
@@ -24,14 +25,14 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
 
         $dep = $this->cluster->replicaSet()
             ->setName('mysql')
-            ->setLabels(['tier' => 'backend'])
+            ->setLabels(['tier' => 'rs-backend'])
             ->setAnnotations(['mysql/annotation' => 'yes'])
             ->setReplicas(3)
             ->setTemplate($pod);
 
         $this->assertEquals('apps/v1', $dep->getApiVersion());
         $this->assertEquals('mysql', $dep->getName());
-        $this->assertEquals(['tier' => 'backend'], $dep->getLabels());
+        $this->assertEquals(['tier' => 'rs-backend'], $dep->getLabels());
         $this->assertEquals(['mysql/annotation' => 'yes'], $dep->getAnnotations());
         $this->assertEquals(3, $dep->getReplicas());
         $this->assertEquals($pod->getName(), $dep->getTemplate()->getName());
@@ -43,7 +44,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
     {
         $mysql = K8s::container()
             ->setName('mysql')
-            ->setImage('public.ecr.aws/docker/library/mysql', '5.7')
+            ->setImage('public.ecr.aws/docker/library/mysql', '8.0')
             ->setPorts([
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ]);
@@ -56,7 +57,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
 
         $this->assertEquals('apps/v1', $dep->getApiVersion());
         $this->assertEquals('mysql', $dep->getName());
-        $this->assertEquals(['tier' => 'backend'], $dep->getLabels());
+        $this->assertEquals(['tier' => 'rs-backend'], $dep->getLabels());
         $this->assertEquals(['mysql/annotation' => 'yes'], $dep->getAnnotations());
         $this->assertEquals(3, $dep->getReplicas());
         $this->assertEquals($pod->getName(), $dep->getTemplate()->getName());
@@ -81,7 +82,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
     {
         $mysql = K8s::container()
             ->setName('mysql')
-            ->setImage('public.ecr.aws/docker/library/mysql', '5.7')
+            ->setImage('public.ecr.aws/docker/library/mysql', '8.0')
             ->setPorts([
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ])
@@ -90,17 +91,16 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
 
         $pod = $this->cluster->pod()
             ->setName('mysql')
-            ->setLabels(['tier' => 'backend', 'replicaSet-name' => 'mysql'])
+            ->setLabels(['tier' => 'rs-backend', 'replicaset-name' => 'mysql'])
             ->setAnnotations(['mysql/annotation' => 'yes'])
             ->setContainers([$mysql]);
 
         $dep = $this->cluster->replicaSet()
             ->setName('mysql')
-            ->setLabels(['tier' => 'backend'])
+            ->setLabels(['tier' => 'rs-backend'])
             ->setAnnotations(['mysql/annotation' => 'yes'])
-            ->setSelectors(['matchLabels' => ['tier' => 'backend']])
+            ->setSelectors(['matchLabels' => ['replicaset-name' => 'mysql']])
             ->setReplicas(1)
-            ->setUpdateStrategy('RollingUpdate')
             ->setMinReadySeconds(0)
             ->setTemplate($pod);
 
@@ -116,7 +116,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
 
         $this->assertEquals('apps/v1', $dep->getApiVersion());
         $this->assertEquals('mysql', $dep->getName());
-        $this->assertEquals(['tier' => 'backend'], $dep->getLabels());
+        $this->assertEquals(['tier' => 'rs-backend'], $dep->getLabels());
         $this->assertEquals(['mysql/annotation' => 'yes'], $dep->getAnnotations());
         $this->assertEquals(1, $dep->getReplicas());
         $this->assertEquals(0, $dep->getMinReadySeconds());
@@ -132,7 +132,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
         K8sReplicaSet::selectPods(function ($dep) {
             $this->assertInstanceOf(K8sReplicaSet::class, $dep);
 
-            return ['tier' => 'backend'];
+            return ['replicaset-name' => 'mysql'];
         });
 
         $pods = $dep->getPods();
@@ -186,7 +186,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
 
         $this->assertEquals('apps/v1', $dep->getApiVersion());
         $this->assertEquals('mysql', $dep->getName());
-        $this->assertEquals(['tier' => 'backend'], $dep->getLabels());
+        $this->assertEquals(['tier' => 'rs-backend'], $dep->getLabels());
         $this->assertEquals(['mysql/annotation' => 'yes'], $dep->getAnnotations());
         $this->assertEquals(1, $dep->getReplicas());
 
@@ -200,7 +200,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
         $cpuMetric = K8s::metric()->cpu()->averageUtilization(70);
 
         $hpa = $this->cluster->horizontalPodAutoscaler()
-            ->setName('deploy-mysql')
+            ->setName('rs-mysql')
             ->setResource($dep)
             ->addMetrics([$cpuMetric])
             ->setMetrics([$cpuMetric])
@@ -231,7 +231,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
 
         $this->assertEquals('apps/v1', $dep->getApiVersion());
         $this->assertEquals('mysql', $dep->getName());
-        $this->assertEquals(['tier' => 'backend'], $dep->getLabels());
+        $this->assertEquals(['tier' => 'rs-backend'], $dep->getLabels());
         $this->assertEquals([], $dep->getAnnotations());
         $this->assertEquals(2, $dep->getReplicas());
 
@@ -241,7 +241,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
     public function runDeletionTests()
     {
         $dep = $this->cluster->getReplicaSetByName('mysql');
-        $hpa = $this->cluster->getHorizontalPodAutoscalerByName('deploy-mysql');
+        $hpa = $this->cluster->getHorizontalPodAutoscalerByName('rs-mysql');
 
         $this->assertTrue($dep->delete());
         $this->assertTrue($hpa->delete());
@@ -264,7 +264,7 @@ class ReplicaSetTest extends \RenokiCo\PhpK8s\Test\TestCase
         $this->expectException(KubernetesAPIException::class);
 
         $this->cluster->getReplicaSetByName('mysql');
-        $this->cluster->getHorizontalPodAutoscalerByName('deploy-mysql');
+        $this->cluster->getHorizontalPodAutoscalerByName('rs-mysql');
     }
 
     public function runWatchAllTests()
