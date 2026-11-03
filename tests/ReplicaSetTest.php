@@ -25,14 +25,14 @@ class ReplicaSetTest extends TestCase
 
         $dep = $this->cluster->replicaSet()
             ->setName('mysql')
-            ->setLabels(['tier' => 'backend'])
+            ->setLabels(['tier' => 'rs-backend'])
             ->setAnnotations(['mysql/annotation' => 'yes'])
             ->setReplicas(3)
             ->setTemplate($pod);
 
         $this->assertEquals('apps/v1', $dep->getApiVersion());
         $this->assertEquals('mysql', $dep->getName());
-        $this->assertEquals(['tier' => 'backend'], $dep->getLabels());
+        $this->assertEquals(['tier' => 'rs-backend'], $dep->getLabels());
         $this->assertEquals(['mysql/annotation' => 'yes'], $dep->getAnnotations());
         $this->assertEquals(3, $dep->getReplicas());
         $this->assertEquals($pod->getName(), $dep->getTemplate()->getName());
@@ -57,7 +57,7 @@ class ReplicaSetTest extends TestCase
 
         $this->assertEquals('apps/v1', $dep->getApiVersion());
         $this->assertEquals('mysql', $dep->getName());
-        $this->assertEquals(['tier' => 'backend'], $dep->getLabels());
+        $this->assertEquals(['tier' => 'rs-backend'], $dep->getLabels());
         $this->assertEquals(['mysql/annotation' => 'yes'], $dep->getAnnotations());
         $this->assertEquals(3, $dep->getReplicas());
         $this->assertEquals($pod->getName(), $dep->getTemplate()->getName());
@@ -91,13 +91,13 @@ class ReplicaSetTest extends TestCase
 
         $pod = $this->cluster->pod()
             ->setName('mysql')
-            ->setLabels(['tier' => 'backend', 'replicaset-name' => 'mysql'])
+            ->setLabels(['tier' => 'rs-backend', 'replicaset-name' => 'mysql'])
             ->setAnnotations(['mysql/annotation' => 'yes'])
             ->setContainers([$mysql]);
 
         $dep = $this->cluster->replicaSet()
             ->setName('mysql')
-            ->setLabels(['tier' => 'backend'])
+            ->setLabels(['tier' => 'rs-backend'])
             ->setAnnotations(['mysql/annotation' => 'yes'])
             ->setSelectors(['matchLabels' => ['replicaset-name' => 'mysql']])
             ->setReplicas(1)
@@ -116,7 +116,7 @@ class ReplicaSetTest extends TestCase
 
         $this->assertEquals('apps/v1', $dep->getApiVersion());
         $this->assertEquals('mysql', $dep->getName());
-        $this->assertEquals(['tier' => 'backend'], $dep->getLabels());
+        $this->assertEquals(['tier' => 'rs-backend'], $dep->getLabels());
         $this->assertEquals(['mysql/annotation' => 'yes'], $dep->getAnnotations());
         $this->assertEquals(1, $dep->getReplicas());
         $this->assertEquals(0, $dep->getMinReadySeconds());
@@ -186,7 +186,7 @@ class ReplicaSetTest extends TestCase
 
         $this->assertEquals('apps/v1', $dep->getApiVersion());
         $this->assertEquals('mysql', $dep->getName());
-        $this->assertEquals(['tier' => 'backend'], $dep->getLabels());
+        $this->assertEquals(['tier' => 'rs-backend'], $dep->getLabels());
         $this->assertEquals(['mysql/annotation' => 'yes'], $dep->getAnnotations());
         $this->assertEquals(1, $dep->getReplicas());
 
@@ -231,7 +231,7 @@ class ReplicaSetTest extends TestCase
 
         $this->assertEquals('apps/v1', $dep->getApiVersion());
         $this->assertEquals('mysql', $dep->getName());
-        $this->assertEquals(['tier' => 'backend'], $dep->getLabels());
+        $this->assertEquals(['tier' => 'rs-backend'], $dep->getLabels());
         $this->assertEquals([], $dep->getAnnotations());
         $this->assertEquals(2, $dep->getReplicas());
 
