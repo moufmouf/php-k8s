@@ -14,7 +14,7 @@ class ReplicaSetTest extends TestCase
     {
         $mysql = K8s::container()
             ->setName('mysql')
-            ->setImage('public.ecr.aws/docker/library/mysql', '5.7')
+            ->setImage('public.ecr.aws/docker/library/mysql', '8.0')
             ->setPorts([
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ]);
@@ -44,7 +44,7 @@ class ReplicaSetTest extends TestCase
     {
         $mysql = K8s::container()
             ->setName('mysql')
-            ->setImage('public.ecr.aws/docker/library/mysql', '5.7')
+            ->setImage('public.ecr.aws/docker/library/mysql', '8.0')
             ->setPorts([
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ]);
@@ -82,7 +82,7 @@ class ReplicaSetTest extends TestCase
     {
         $mysql = K8s::container()
             ->setName('mysql')
-            ->setImage('public.ecr.aws/docker/library/mysql', '5.7')
+            ->setImage('public.ecr.aws/docker/library/mysql', '8.0')
             ->setPorts([
                 ['name' => 'mysql', 'protocol' => 'TCP', 'containerPort' => 3306],
             ])
