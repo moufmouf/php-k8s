@@ -64,6 +64,9 @@ jobs:
         with:
           minikube-version: 1.29.0
           container-runtime: containerd
+          # The default (2 CPUs, ~3.9GB) gets the mysql test pods OOM-killed, which takes the API server down with them.
+          cpus: max
+          memory: 10g
           kubernetes-version: v${{ matrix.kubernetes }}
 
       - name: Run Kubernetes Proxy
